@@ -32,6 +32,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.OPTIONAL_TO_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.PAYLOAD_SHALLOW_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.PENDING_TRANSACTION_SHALLOW_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.PQ_SIGNATURE_SHALLOW_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.calculateListShallowSize;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
@@ -157,7 +158,8 @@ public abstract class PendingTransaction
     return switch (transaction.getType()) {
           case FRONTIER -> computeFrontierMemorySize();
           case ACCESS_LIST -> computeAccessListMemorySize();
-          case EIP1559, HYBRID_PQ -> computeEIP1559MemorySize();
+          case EIP1559 -> computeEIP1559MemorySize();
+          case HYBRID_PQ -> computeHybridPQMemorySize();
           case BLOB -> computeBlobMemorySize();
           case DELEGATE_CODE -> computeDelegateCodeMemorySize();
         }
@@ -185,6 +187,15 @@ public abstract class PendingTransaction
         + computeToMemorySize()
         + computeChainIdMemorySize()
         + computeAccessListEntriesMemorySize();
+  }
+
+  private int computeHybridPQMemorySize() {
+    return EIP1559_AND_EIP4844_SHALLOW_SIZE
+        + computePayloadMemorySize()
+        + computeToMemorySize()
+        + computeChainIdMemorySize()
+        + computeAccessListEntriesMemorySize()
+        + computePQSignatureMemorySize();
   }
 
   private int computeBlobMemorySize() {
@@ -259,6 +270,19 @@ public abstract class PendingTransaction
             cd -> {
               int totalSize = OPTIONAL_CODE_DELEGATION_LIST_SHALLOW_SIZE;
               totalSize += cd.size() * CODE_DELEGATION_ENTRY_SIZE;
+              return totalSize;
+            })
+        .orElse(0);
+  }
+
+  private int computePQSignatureMemorySize() {
+    return transaction
+        .getPQSignature()
+        .map(
+            pqSig -> {
+              // Optional shallow size + PQSignature object shallow size + signature bytes
+              int totalSize = OPTIONAL_SHALLOW_SIZE + PQ_SIGNATURE_SHALLOW_SIZE;
+              totalSize += pqSig.getSignatureBytes().size();
               return totalSize;
             })
         .orElse(0);
@@ -440,8 +464,10 @@ public abstract class PendingTransaction
    * class changes its structure.
    */
   public interface MemorySize {
-    int FRONTIER_AND_ACCESS_LIST_SHALLOW_SIZE = 912;
-    int EIP1559_AND_EIP4844_SHALLOW_SIZE = 1024;
+    // Transaction object shallow size increased due to 2 new Optional fields:
+    // pqSignature and pqPublicKey for hybrid PQ signature support
+    int FRONTIER_AND_ACCESS_LIST_SHALLOW_SIZE = 920;  // was 912, +8 bytes
+    int EIP1559_AND_EIP4844_SHALLOW_SIZE = 1032;  // was 1024, +8 bytes
     int OPTIONAL_TO_SIZE = 112;
     int OPTIONAL_CHAIN_ID_SIZE = 80;
     int PAYLOAD_SHALLOW_SIZE = 32;
@@ -451,6 +477,7 @@ public abstract class PendingTransaction
     int OPTIONAL_CODE_DELEGATION_LIST_SHALLOW_SIZE = 40;
     int CODE_DELEGATION_ENTRY_SIZE = 520;
     int OPTIONAL_SHALLOW_SIZE = 16;
+    int PQ_SIGNATURE_SHALLOW_SIZE = 32;
     int KZG_PROOF_CONTAINER_SHALLOW_SIZE = 24;
     int KZG_PROOF_SIZE = 112;
     int BLOBS_WITH_COMMITMENTS_SIZE = 48;

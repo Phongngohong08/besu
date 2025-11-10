@@ -105,7 +105,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
       Set.of(SignatureAlgorithm.class, TransactionType.class, BlobType.class);
 
   /**
-   * Field that points to constant values, across all pending transaction types, and are ignored
+   * Field that points to constant values, common to all pending transactions, and are ignored
    * during the calculation
    */
   private static final Set<String> COMMON_CONSTANT_FIELD_PATHS =
