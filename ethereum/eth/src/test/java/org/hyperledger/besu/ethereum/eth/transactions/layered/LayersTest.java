@@ -1762,7 +1762,7 @@ public class LayersTest extends BaseTransactionPoolTest {
           switch (type) {
             case FRONTIER -> createFrontierPendingTransaction(sender, nonce);
             case ACCESS_LIST -> createAccessListPendingTransaction(sender, nonce);
-            case EIP1559 -> createEIP1559PendingTransaction(sender, nonce);
+            case EIP1559, HYBRID_PQ -> createEIP1559PendingTransaction(sender, nonce);
             case BLOB -> createBlobPendingTransaction(sender, nonce);
             case DELEGATE_CODE ->
                 createEIP7702PendingTransaction(sender, nonce, authorityAndNonces);

@@ -157,7 +157,7 @@ public abstract class PendingTransaction
     return switch (transaction.getType()) {
           case FRONTIER -> computeFrontierMemorySize();
           case ACCESS_LIST -> computeAccessListMemorySize();
-          case EIP1559 -> computeEIP1559MemorySize();
+          case EIP1559, HYBRID_PQ -> computeEIP1559MemorySize();
           case BLOB -> computeBlobMemorySize();
           case DELEGATE_CODE -> computeDelegateCodeMemorySize();
         }

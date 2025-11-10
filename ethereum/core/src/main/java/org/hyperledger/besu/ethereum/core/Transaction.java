@@ -128,6 +128,10 @@ public class Transaction
   private final Optional<BlobsWithCommitments> blobsWithCommitments;
   private final Optional<List<CodeDelegation>> maybeCodeDelegationList;
 
+  // Post-Quantum signature support for hybrid transactions
+  private final Optional<org.hyperledger.besu.crypto.PQSignature> pqSignature;
+  private final Optional<Bytes> pqPublicKey;
+
   private final Optional<Bytes> rawRlp;
 
   public static Builder builder() {
@@ -206,6 +210,8 @@ public class Transaction
       final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments,
       final Optional<List<CodeDelegation>> maybeCodeDelegationList,
+      final Optional<org.hyperledger.besu.crypto.PQSignature> pqSignature,
+      final Optional<Bytes> pqPublicKey,
       final Optional<Bytes> rawRlp,
       final Optional<Hash> hash,
       final Optional<Integer> sizeForAnnouncement,
@@ -270,6 +276,8 @@ public class Transaction
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
     this.maybeCodeDelegationList = maybeCodeDelegationList;
+    this.pqSignature = pqSignature;
+    this.pqPublicKey = pqPublicKey;
     this.rawRlp = rawRlp;
     hash.ifPresent(h -> this.hash = h);
     sizeForAnnouncement.ifPresent(i -> this.sizeForAnnouncement = i);
@@ -454,6 +462,24 @@ public class Transaction
   @Override
   public Optional<BigInteger> getChainId() {
     return chainId;
+  }
+
+  /**
+   * Returns the optional post-quantum signature for hybrid transactions.
+   *
+   * @return the post-quantum signature if present; otherwise {@code Optional.empty()}
+   */
+  public Optional<org.hyperledger.besu.crypto.PQSignature> getPQSignature() {
+    return pqSignature;
+  }
+
+  /**
+   * Returns the optional post-quantum public key for hybrid transactions.
+   *
+   * @return the post-quantum public key if present; otherwise {@code Optional.empty()}
+   */
+  public Optional<Bytes> getPQPublicKey() {
+    return pqPublicKey;
   }
 
   /**
@@ -847,7 +873,7 @@ public class Transaction
     final Bytes preimage =
         switch (transactionType) {
           case FRONTIER -> frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
-          case EIP1559 ->
+          case EIP1559, HYBRID_PQ ->
               eip1559Preimage(
                   nonce,
                   maxPriorityFeePerGas,
@@ -1242,6 +1268,8 @@ public class Transaction
             detachedVersionedHashes,
             detachedBlobsWithCommitments,
             detachedCodeDelegationList,
+            pqSignature,
+            pqPublicKey.map(Bytes::copy),
             Optional.empty(),
             Optional.ofNullable(hash),
             Optional.of(sizeForAnnouncement),
@@ -1324,6 +1352,11 @@ public class Transaction
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
     protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
+
+    // Post-Quantum signature support
+    protected org.hyperledger.besu.crypto.PQSignature pqSignature = null;
+    protected Bytes pqPublicKey = null;
+
     protected Bytes rawRlp = null;
     private Optional<Hash> hash = Optional.empty();
     private Optional<Integer> sizeForAnnouncement = Optional.empty();
@@ -1493,6 +1526,8 @@ public class Transaction
           Optional.ofNullable(versionedHashes),
           Optional.ofNullable(blobsWithCommitments),
           codeDelegationAuthorizations,
+          Optional.ofNullable(pqSignature),
+          Optional.ofNullable(pqPublicKey),
           Optional.ofNullable(rawRlp),
           hash,
           sizeForAnnouncement,
@@ -1551,6 +1586,28 @@ public class Transaction
 
     public Builder codeDelegations(final List<CodeDelegation> codeDelegations) {
       this.codeDelegationAuthorizations = Optional.ofNullable(codeDelegations);
+      return this;
+    }
+
+    /**
+     * Set the post-quantum signature for hybrid transactions.
+     *
+     * @param pqSignature the post-quantum signature
+     * @return this builder
+     */
+    public Builder pqSignature(final org.hyperledger.besu.crypto.PQSignature pqSignature) {
+      this.pqSignature = pqSignature;
+      return this;
+    }
+
+    /**
+     * Set the post-quantum public key for hybrid transactions.
+     *
+     * @param pqPublicKey the post-quantum public key bytes
+     * @return this builder
+     */
+    public Builder pqPublicKey(final Bytes pqPublicKey) {
+      this.pqPublicKey = pqPublicKey;
       return this;
     }
   }

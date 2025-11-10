@@ -34,11 +34,13 @@ public class TransactionDecoder {
   }
 
   private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
-      ImmutableMap.of(
-          TransactionType.ACCESS_LIST, AccessListTransactionDecoder::decode,
-          TransactionType.EIP1559, EIP1559TransactionDecoder::decode,
-          TransactionType.BLOB, BlobTransactionDecoder::decode,
-          TransactionType.DELEGATE_CODE, CodeDelegationTransactionDecoder::decode);
+      ImmutableMap.<TransactionType, Decoder>builder()
+          .put(TransactionType.ACCESS_LIST, AccessListTransactionDecoder::decode)
+          .put(TransactionType.EIP1559, EIP1559TransactionDecoder::decode)
+          .put(TransactionType.BLOB, BlobTransactionDecoder::decode)
+          .put(TransactionType.DELEGATE_CODE, CodeDelegationTransactionDecoder::decode)
+          .put(TransactionType.HYBRID_PQ, HybridPQTransactionDecoder::decode)
+          .build();
 
   private static final ImmutableMap<TransactionType, Decoder> POOLED_TRANSACTION_DECODERS =
       ImmutableMap.of(TransactionType.BLOB, BlobPooledTransactionDecoder::decode);

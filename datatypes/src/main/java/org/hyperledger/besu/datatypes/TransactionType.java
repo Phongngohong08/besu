@@ -29,10 +29,12 @@ public enum TransactionType {
   /** Blob transaction type. */
   BLOB(0x03),
   /** Eip7702 transaction type. */
-  DELEGATE_CODE(0x04);
+  DELEGATE_CODE(0x04),
+  /** Hybrid Post-Quantum transaction type (ECDSA + PQC). */
+  HYBRID_PQ(0x05);
 
   private static final Set<TransactionType> ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES =
-      Set.of(ACCESS_LIST, EIP1559, BLOB, DELEGATE_CODE);
+      Set.of(ACCESS_LIST, EIP1559, BLOB, DELEGATE_CODE, HYBRID_PQ);
 
   private static final EnumSet<TransactionType> LEGACY_FEE_MARKET_TRANSACTION_TYPES =
       EnumSet.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST);
@@ -86,7 +88,8 @@ public enum TransactionType {
               TransactionType.ACCESS_LIST,
               TransactionType.EIP1559,
               TransactionType.BLOB,
-              TransactionType.DELEGATE_CODE
+              TransactionType.DELEGATE_CODE,
+              TransactionType.HYBRID_PQ
             })
         .filter(transactionType -> transactionType.typeValue == serializedTypeValue)
         .findFirst()

@@ -176,7 +176,7 @@ public class BaseTransactionPoolTest extends TrustedSetupClassLoaderExtension {
     final TransactionType txType = TransactionType.values()[randomizeTxType.nextInt(4)];
 
     return switch (txType) {
-      case FRONTIER, ACCESS_LIST, EIP1559 ->
+      case FRONTIER, ACCESS_LIST, EIP1559, HYBRID_PQ ->
           createTransaction(txType, nonce, maxGasPrice, payloadSize, null, keys);
       case BLOB ->
           createTransaction(
