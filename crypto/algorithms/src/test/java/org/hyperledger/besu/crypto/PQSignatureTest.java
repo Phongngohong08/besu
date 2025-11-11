@@ -46,10 +46,10 @@ public class PQSignatureTest {
     assertThat(PQSignature.PQAlgorithmType.DILITHIUM2.getSignatureSize()).isEqualTo(2420);
 
     assertThat(PQSignature.PQAlgorithmType.DILITHIUM3.getTypeId()).isEqualTo(0x02);
-    assertThat(PQSignature.PQAlgorithmType.DILITHIUM3.getSignatureSize()).isEqualTo(3293);
+    assertThat(PQSignature.PQAlgorithmType.DILITHIUM3.getSignatureSize()).isEqualTo(3309);
 
     assertThat(PQSignature.PQAlgorithmType.DILITHIUM5.getTypeId()).isEqualTo(0x03);
-    assertThat(PQSignature.PQAlgorithmType.DILITHIUM5.getSignatureSize()).isEqualTo(4595);
+    assertThat(PQSignature.PQAlgorithmType.DILITHIUM5.getSignatureSize()).isEqualTo(4627);
 
     assertThat(PQSignature.PQAlgorithmType.FALCON512.getTypeId()).isEqualTo(0x04);
     assertThat(PQSignature.PQAlgorithmType.FALCON512.getSignatureSize()).isEqualTo(690);

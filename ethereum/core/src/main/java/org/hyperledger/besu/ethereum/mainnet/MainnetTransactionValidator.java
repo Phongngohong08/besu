@@ -18,6 +18,9 @@ import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
+import org.hyperledger.besu.crypto.PQCryptoFactory;
+import org.hyperledger.besu.crypto.PQSignature;
+import org.hyperledger.besu.crypto.PostQuantumCrypto;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.BlobType;
@@ -355,6 +358,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
           "replay protected signatures is not supported");
     }
 
+    // Validate ECDSA signature
     final SECPSignature signature = transaction.getSignature();
     final BigInteger halfCurveOrder = SignatureAlgorithmFactory.getInstance().getHalfCurveOrder();
     if (disallowSignatureMalleability && signature.getS().compareTo(halfCurveOrder) > 0) {
@@ -374,6 +378,83 @@ public class MainnetTransactionValidator implements TransactionValidator {
           TransactionInvalidReason.INVALID_SIGNATURE,
           "sender could not be extracted from transaction signature");
     }
+
+    // Validate Post-Quantum signature if present (for HYBRID_PQ transactions)
+    if (transaction.getType() == TransactionType.HYBRID_PQ) {
+      return validatePQSignature(transaction);
+    }
+
     return ValidationResult.valid();
+  }
+
+  /**
+   * Validates the Post-Quantum signature for HYBRID_PQ transactions.
+   *
+   * @param transaction the transaction to validate
+   * @return validation result
+   */
+  private ValidationResult<TransactionInvalidReason> validatePQSignature(
+      final Transaction transaction) {
+    // For HYBRID_PQ transactions, PQ signature is optional but recommended
+    // If not present, transaction is still valid with ECDSA signature only (backward compatibility)
+    if (transaction.getPQSignature().isEmpty() || transaction.getPQPublicKey().isEmpty()) {
+      LOG.warn(
+          "HYBRID_PQ transaction {} missing PQ signature or public key, falling back to ECDSA-only validation",
+          transaction.getHash());
+      return ValidationResult.valid();
+    }
+
+    final PQSignature pqSignature = transaction.getPQSignature().get();
+    final org.apache.tuweni.bytes.Bytes pqPublicKey = transaction.getPQPublicKey().get();
+
+    try {
+      // Get the appropriate PQ crypto implementation for this algorithm
+      final PostQuantumCrypto pqCrypto =
+          PQCryptoFactory.getInstance(pqSignature.getAlgorithmType());
+
+      // Get the transaction hash that was signed
+      // For PQ signatures, we sign the transaction hash (without any signatures)
+      final org.apache.tuweni.bytes.Bytes signedData = transaction.getHash();
+
+      // Verify the PQ signature
+      final boolean isValid = pqCrypto.verify(signedData, pqSignature, pqPublicKey);
+
+      if (!isValid) {
+        LOG.warn(
+            "Invalid PQ signature for transaction {}, algorithm: {}",
+            transaction.getHash(),
+            pqSignature.getAlgorithmType());
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_SIGNATURE,
+            String.format(
+                "Invalid Post-Quantum signature (algorithm: %s)", pqSignature.getAlgorithmType()));
+      }
+
+      LOG.debug(
+          "Valid PQ signature for transaction {}, algorithm: {}",
+          transaction.getHash(),
+          pqSignature.getAlgorithmType());
+      return ValidationResult.valid();
+
+    } catch (final IllegalArgumentException e) {
+      // Unsupported PQ algorithm or invalid signature format
+      LOG.warn(
+          "Failed to validate PQ signature for transaction {}: {}",
+          transaction.getHash(),
+          e.getMessage());
+      // Fallback to ECDSA-only validation for forward compatibility
+      return ValidationResult.valid();
+    } catch (final Exception e) {
+      // Unexpected error during PQ signature validation
+      LOG.error(
+          "Unexpected error validating PQ signature for transaction {}: {}",
+          transaction.getHash(),
+          e.getMessage(),
+          e);
+      // Reject transaction on unexpected errors to prevent potential exploits
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_SIGNATURE,
+          "Error validating Post-Quantum signature: " + e.getMessage());
+    }
   }
 }

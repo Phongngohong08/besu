@@ -23,44 +23,43 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings({"DoNotCreateSecureRandomDirectly", "DefaultCharset"})
-public class DilithiumCryptoTest {
+public class FalconCryptoTest {
 
   @Test
   public void testGetAlgorithmType() {
-    DilithiumCrypto crypto = new DilithiumCrypto(PQSignature.PQAlgorithmType.DILITHIUM2);
-    assertThat(crypto.getAlgorithmType()).isEqualTo(PQSignature.PQAlgorithmType.DILITHIUM2);
+    FalconCrypto crypto = new FalconCrypto(PQSignature.PQAlgorithmType.FALCON512);
+    assertThat(crypto.getAlgorithmType()).isEqualTo(PQSignature.PQAlgorithmType.FALCON512);
   }
 
   @Test
   public void testGetPublicKeySize() {
-    DilithiumCrypto crypto2 = new DilithiumCrypto(PQSignature.PQAlgorithmType.DILITHIUM2);
-    assertThat(crypto2.getPublicKeySize()).isEqualTo(1312);
+    FalconCrypto crypto512 = new FalconCrypto(PQSignature.PQAlgorithmType.FALCON512);
+    assertThat(crypto512.getPublicKeySize()).isEqualTo(896);
 
-    DilithiumCrypto crypto3 = new DilithiumCrypto(PQSignature.PQAlgorithmType.DILITHIUM3);
-    assertThat(crypto3.getPublicKeySize()).isEqualTo(1952);
-
-    DilithiumCrypto crypto5 = new DilithiumCrypto(PQSignature.PQAlgorithmType.DILITHIUM5);
-    assertThat(crypto5.getPublicKeySize()).isEqualTo(2592);
+    FalconCrypto crypto1024 = new FalconCrypto(PQSignature.PQAlgorithmType.FALCON1024);
+    assertThat(crypto1024.getPublicKeySize()).isEqualTo(1792);
   }
 
   @Test
-  public void testSignAndVerifyDilithium2() {
-    DilithiumCrypto crypto = new DilithiumCrypto(PQSignature.PQAlgorithmType.DILITHIUM2);
+  public void testSignAndVerifyFalcon512() {
+    FalconCrypto crypto = new FalconCrypto(PQSignature.PQAlgorithmType.FALCON512);
     SecureRandom random = new SecureRandom();
 
     // Generate key pair
-    DilithiumCrypto.KeyPairBytes keyPair = crypto.generateKeyPair(random);
+    FalconCrypto.KeyPairBytes keyPair = crypto.generateKeyPair(random);
 
     // Test data
-    Bytes testData = Bytes.wrap("Hello, Post-Quantum World!".getBytes());
+    Bytes testData = Bytes.wrap("Hello, Falcon Signatures!".getBytes());
 
-    // Sign the data using the key pair
+    // Sign the data
     PQSignature signature = crypto.signWithKeyPair(testData, keyPair);
 
     // Verify signature properties
-    assertThat(signature.getAlgorithmType()).isEqualTo(PQSignature.PQAlgorithmType.DILITHIUM2);
+    assertThat(signature.getAlgorithmType()).isEqualTo(PQSignature.PQAlgorithmType.FALCON512);
+
+    // Note: Falcon signatures are variable length, so we check it's within expected range
     assertThat(signature.getSignatureBytes().size())
-        .isEqualTo(PQSignature.PQAlgorithmType.DILITHIUM2.getSignatureSize());
+        .isLessThanOrEqualTo(PQSignature.PQAlgorithmType.FALCON512.getSignatureSize());
 
     // Verify the signature
     boolean isValid = crypto.verify(testData, signature, keyPair.getPublicKey());
@@ -68,15 +67,15 @@ public class DilithiumCryptoTest {
   }
 
   @Test
-  public void testSignAndVerifyDilithium3() {
-    DilithiumCrypto crypto = new DilithiumCrypto(PQSignature.PQAlgorithmType.DILITHIUM3);
+  public void testSignAndVerifyFalcon1024() {
+    FalconCrypto crypto = new FalconCrypto(PQSignature.PQAlgorithmType.FALCON1024);
     SecureRandom random = new SecureRandom();
 
     // Generate key pair
-    DilithiumCrypto.KeyPairBytes keyPair = crypto.generateKeyPair(random);
+    FalconCrypto.KeyPairBytes keyPair = crypto.generateKeyPair(random);
 
     // Test data
-    Bytes testData = Bytes.wrap("Test Dilithium3".getBytes());
+    Bytes testData = Bytes.wrap("Test Falcon-1024".getBytes());
 
     // Sign and verify
     PQSignature signature = crypto.signWithKeyPair(testData, keyPair);
@@ -84,17 +83,17 @@ public class DilithiumCryptoTest {
 
     assertThat(isValid).isTrue();
     assertThat(signature.getSignatureBytes().size())
-        .isEqualTo(PQSignature.PQAlgorithmType.DILITHIUM3.getSignatureSize());
+        .isLessThanOrEqualTo(PQSignature.PQAlgorithmType.FALCON1024.getSignatureSize());
   }
 
   @Test
   public void testVerifyWithWrongPublicKey() {
-    DilithiumCrypto crypto = new DilithiumCrypto(PQSignature.PQAlgorithmType.DILITHIUM2);
+    FalconCrypto crypto = new FalconCrypto(PQSignature.PQAlgorithmType.FALCON512);
     SecureRandom random = new SecureRandom();
 
     // Generate two key pairs
-    DilithiumCrypto.KeyPairBytes keyPair1 = crypto.generateKeyPair(random);
-    DilithiumCrypto.KeyPairBytes keyPair2 = crypto.generateKeyPair(random);
+    FalconCrypto.KeyPairBytes keyPair1 = crypto.generateKeyPair(random);
+    FalconCrypto.KeyPairBytes keyPair2 = crypto.generateKeyPair(random);
 
     // Test data
     Bytes testData = Bytes.wrap("Test data".getBytes());
@@ -109,11 +108,11 @@ public class DilithiumCryptoTest {
 
   @Test
   public void testVerifyWithModifiedData() {
-    DilithiumCrypto crypto = new DilithiumCrypto(PQSignature.PQAlgorithmType.DILITHIUM2);
+    FalconCrypto crypto = new FalconCrypto(PQSignature.PQAlgorithmType.FALCON512);
     SecureRandom random = new SecureRandom();
 
     // Generate key pair
-    DilithiumCrypto.KeyPairBytes keyPair = crypto.generateKeyPair(random);
+    FalconCrypto.KeyPairBytes keyPair = crypto.generateKeyPair(random);
 
     // Original data
     Bytes originalData = Bytes.wrap("Original data".getBytes());
@@ -129,10 +128,10 @@ public class DilithiumCryptoTest {
 
   @Test
   public void testVerifyWithNullInputs() {
-    DilithiumCrypto crypto = new DilithiumCrypto(PQSignature.PQAlgorithmType.DILITHIUM2);
+    FalconCrypto crypto = new FalconCrypto(PQSignature.PQAlgorithmType.FALCON512);
     SecureRandom random = new SecureRandom();
 
-    DilithiumCrypto.KeyPairBytes keyPair = crypto.generateKeyPair(random);
+    FalconCrypto.KeyPairBytes keyPair = crypto.generateKeyPair(random);
     Bytes testData = Bytes.wrap("Test".getBytes());
     PQSignature signature = crypto.signWithKeyPair(testData, keyPair);
 
@@ -144,27 +143,27 @@ public class DilithiumCryptoTest {
 
   @Test
   public void testVerifyWithWrongAlgorithmType() {
-    DilithiumCrypto crypto2 = new DilithiumCrypto(PQSignature.PQAlgorithmType.DILITHIUM2);
-    DilithiumCrypto crypto3 = new DilithiumCrypto(PQSignature.PQAlgorithmType.DILITHIUM3);
+    FalconCrypto crypto512 = new FalconCrypto(PQSignature.PQAlgorithmType.FALCON512);
+    FalconCrypto crypto1024 = new FalconCrypto(PQSignature.PQAlgorithmType.FALCON1024);
     SecureRandom random = new SecureRandom();
 
-    // Generate key pair with Dilithium2
-    DilithiumCrypto.KeyPairBytes keyPair = crypto2.generateKeyPair(random);
+    // Generate key pair with Falcon-512
+    FalconCrypto.KeyPairBytes keyPair = crypto512.generateKeyPair(random);
     Bytes testData = Bytes.wrap("Test".getBytes());
 
-    // Sign with Dilithium2
-    PQSignature signature2 = crypto2.signWithKeyPair(testData, keyPair);
+    // Sign with Falcon-512
+    PQSignature signature = crypto512.signWithKeyPair(testData, keyPair);
 
-    // Try to verify with Dilithium3 instance should fail
-    boolean isValid = crypto3.verify(testData, signature2, keyPair.getPublicKey());
+    // Try to verify with Falcon-1024 instance should fail
+    boolean isValid = crypto1024.verify(testData, signature, keyPair.getPublicKey());
     assertThat(isValid).isFalse();
   }
 
   @Test
   public void testSignWithNullInputs() {
-    DilithiumCrypto crypto = new DilithiumCrypto(PQSignature.PQAlgorithmType.DILITHIUM2);
+    FalconCrypto crypto = new FalconCrypto(PQSignature.PQAlgorithmType.FALCON512);
     SecureRandom random = new SecureRandom();
-    DilithiumCrypto.KeyPairBytes keyPair = crypto.generateKeyPair(random);
+    FalconCrypto.KeyPairBytes keyPair = crypto.generateKeyPair(random);
 
     assertThatThrownBy(() -> crypto.signWithKeyPair(null, keyPair))
         .isInstanceOf(IllegalArgumentException.class);
@@ -175,14 +174,40 @@ public class DilithiumCryptoTest {
 
   @Test
   public void testKeyPairGeneration() {
-    DilithiumCrypto crypto = new DilithiumCrypto(PQSignature.PQAlgorithmType.DILITHIUM2);
+    FalconCrypto crypto = new FalconCrypto(PQSignature.PQAlgorithmType.FALCON512);
     SecureRandom random = new SecureRandom();
 
-    DilithiumCrypto.KeyPairBytes keyPair = crypto.generateKeyPair(random);
+    FalconCrypto.KeyPairBytes keyPair = crypto.generateKeyPair(random);
 
     // Verify key sizes
-    assertThat(keyPair.getPublicKey().size()).isEqualTo(1312); // Dilithium2 public key size
+    assertThat(keyPair.getPublicKey().size()).isEqualTo(896); // Falcon-512 public key size
     assertThat(keyPair.getPublicKeyParams()).isNotNull();
     assertThat(keyPair.getPrivateKeyParams()).isNotNull();
+  }
+
+  @Test
+  public void testMultipleSignaturesWithSameKey() {
+    FalconCrypto crypto = new FalconCrypto(PQSignature.PQAlgorithmType.FALCON512);
+    SecureRandom random = new SecureRandom();
+
+    FalconCrypto.KeyPairBytes keyPair = crypto.generateKeyPair(random);
+
+    // Sign multiple different messages
+    Bytes data1 = Bytes.wrap("Message 1".getBytes());
+    Bytes data2 = Bytes.wrap("Message 2".getBytes());
+    Bytes data3 = Bytes.wrap("Message 3".getBytes());
+
+    PQSignature sig1 = crypto.signWithKeyPair(data1, keyPair);
+    PQSignature sig2 = crypto.signWithKeyPair(data2, keyPair);
+    PQSignature sig3 = crypto.signWithKeyPair(data3, keyPair);
+
+    // All should verify correctly
+    assertThat(crypto.verify(data1, sig1, keyPair.getPublicKey())).isTrue();
+    assertThat(crypto.verify(data2, sig2, keyPair.getPublicKey())).isTrue();
+    assertThat(crypto.verify(data3, sig3, keyPair.getPublicKey())).isTrue();
+
+    // Cross-verification should fail
+    assertThat(crypto.verify(data1, sig2, keyPair.getPublicKey())).isFalse();
+    assertThat(crypto.verify(data2, sig3, keyPair.getPublicKey())).isFalse();
   }
 }

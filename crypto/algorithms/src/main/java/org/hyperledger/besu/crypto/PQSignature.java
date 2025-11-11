@@ -31,10 +31,10 @@ public class PQSignature {
   public enum PQAlgorithmType {
     /** Dilithium2 algorithm (128-bit security, 2420 byte signature). */
     DILITHIUM2(0x01, 2420),
-    /** Dilithium3 algorithm (192-bit security, 3293 byte signature). */
-    DILITHIUM3(0x02, 3293),
-    /** Dilithium5 algorithm (256-bit security, 4595 byte signature). */
-    DILITHIUM5(0x03, 4595),
+    /** Dilithium3 algorithm (192-bit security, 3309 byte signature). */
+    DILITHIUM3(0x02, 3309),
+    /** Dilithium5 algorithm (256-bit security, 4627 byte signature). */
+    DILITHIUM5(0x03, 4627),
     /** Falcon-512 algorithm (128-bit security, 690 byte signature). */
     FALCON512(0x04, 690),
     /** Falcon-1024 algorithm (256-bit security, 1330 byte signature). */
