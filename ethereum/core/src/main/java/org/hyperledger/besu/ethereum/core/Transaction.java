@@ -873,8 +873,21 @@ public class Transaction
     final Bytes preimage =
         switch (transactionType) {
           case FRONTIER -> frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
-          case EIP1559, HYBRID_PQ ->
+          case EIP1559 ->
               eip1559Preimage(
+                  TransactionType.EIP1559,
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList);
+          case HYBRID_PQ ->
+              eip1559Preimage(
+                  TransactionType.HYBRID_PQ,
                   nonce,
                   maxPriorityFeePerGas,
                   maxFeePerGas,
@@ -956,6 +969,7 @@ public class Transaction
   }
 
   private static Bytes eip1559Preimage(
+      final TransactionType transactionType,
       final long nonce,
       final Wei maxPriorityFeePerGas,
       final Wei maxFeePerGas,
@@ -982,7 +996,7 @@ public class Transaction
                   rlpOutput);
               rlpOutput.endList();
             });
-    return Bytes.concatenate(Bytes.of(TransactionType.EIP1559.getSerializedType()), encoded);
+    return Bytes.concatenate(Bytes.of(transactionType.getSerializedType()), encoded);
   }
 
   private static void eip1559PreimageFields(

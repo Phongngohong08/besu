@@ -595,7 +595,8 @@ public abstract class MainnetProtocolSpecs {
                     Set.of(
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
-                        TransactionType.EIP1559),
+                        TransactionType.EIP1559,
+                        TransactionType.HYBRID_PQ),
                     Integer.MAX_VALUE))
         .transactionProcessorBuilder(
             (gasCalculator,
@@ -928,7 +929,7 @@ public abstract class MainnetProtocolSpecs {
             // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
             .requestsValidator(new MainnetRequestsValidator())
 
-            // change to accept EIP-7702 transactions
+            // change to accept EIP-7702 transactions and HYBRID_PQ transactions
             .transactionValidatorFactoryBuilder(
                 (evm, gasLimitCalculator, feeMarket) ->
                     new TransactionValidatorFactory(
@@ -942,7 +943,8 @@ public abstract class MainnetProtocolSpecs {
                             TransactionType.ACCESS_LIST,
                             TransactionType.EIP1559,
                             TransactionType.BLOB,
-                            TransactionType.DELEGATE_CODE),
+                            TransactionType.DELEGATE_CODE,
+                            TransactionType.HYBRID_PQ),
                         Set.of(BlobType.KZG_PROOF),
                         evm.getMaxInitcodeSize()))
             // CodeDelegationProcessor
