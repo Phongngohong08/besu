@@ -1,0 +1,23 @@
+{
+  "name": "hybrid-pq-transactions",
+  "version": "1.0.0",
+  "description": "Tools for testing HYBRID_PQ transactions with ECDSA + DILITHIUM3 post-quantum signatures",
+  "type": "module",
+  "scripts": {
+    "demo": "node scripts/demo-pq-signer.cjs",
+    "test-ecdsa": "node scripts/test-ecdsa-only-hybrid.cjs",
+    "send-hybrid": "node scripts/send-hybrid-tx-fixed.cjs"
+  },
+  "keywords": [
+    "besu",
+    "post-quantum",
+    "dilithium",
+    "hybrid-signature",
+    "blockchain"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "ethers": "^6.15.0"
+  }
+}
