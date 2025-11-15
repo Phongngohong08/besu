@@ -407,14 +407,33 @@ public class MainnetTransactionValidator implements TransactionValidator {
     final PQSignature pqSignature = transaction.getPQSignature().get();
     final org.apache.tuweni.bytes.Bytes pqPublicKey = transaction.getPQPublicKey().get();
 
+    LOG.warn("========== ENTERING validateHybridPQSignature ==========");
+    LOG.warn("TX hash: {}", transaction.getHash());
+    LOG.warn("PQ algorithm: {}", pqSignature.getAlgorithmType());
+    
     try {
       // Get the appropriate PQ crypto implementation for this algorithm
+      LOG.warn("Getting PQ crypto factory...");
       final PostQuantumCrypto pqCrypto =
           PQCryptoFactory.getInstance(pqSignature.getAlgorithmType());
+      LOG.warn("PQ crypto factory OK");
 
-      // Get the transaction hash that was signed
-      // For PQ signatures, we sign the transaction hash (without any signatures)
-      final org.apache.tuweni.bytes.Bytes signedData = transaction.getHash();
+      // Get the transaction preimage hash that was signed
+      // For PQ signatures, we sign the unsigned transaction hash (preimage hash)
+      LOG.warn("Getting preimage...");
+      final org.apache.tuweni.bytes.Bytes preimage = transaction.encodedPreimage();
+      LOG.warn("Preimage OK, length: {}", preimage.size());
+      
+      LOG.warn("Hashing preimage...");
+      final org.apache.tuweni.bytes.Bytes signedData = Hash.hash(preimage);
+      LOG.warn("Hash OK");
+
+      LOG.warn("========== BESU PQ VERIFICATION DEBUG ==========");
+      LOG.warn("Transaction hash: {}", transaction.getHash());
+      LOG.warn("Preimage length: {}", preimage.size());
+      LOG.warn("Preimage hash (what we verify): {}", signedData.toHexString());
+      LOG.warn("First 50 bytes of preimage: {}", preimage.slice(0, Math.min(50, preimage.size())).toHexString());
+      LOG.warn("================================================");
 
       // Verify the PQ signature
       final boolean isValid = pqCrypto.verify(signedData, pqSignature, pqPublicKey);
@@ -438,14 +457,17 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
     } catch (final IllegalArgumentException e) {
       // Unsupported PQ algorithm or invalid signature format
+      LOG.warn("========== CAUGHT IllegalArgumentException ==========");
       LOG.warn(
           "Failed to validate PQ signature for transaction {}: {}",
           transaction.getHash(),
           e.getMessage());
+      e.printStackTrace();
       // Fallback to ECDSA-only validation for forward compatibility
       return ValidationResult.valid();
     } catch (final Exception e) {
       // Unexpected error during PQ signature validation
+      LOG.error("========== CAUGHT UNEXPECTED EXCEPTION ==========");
       LOG.error(
           "Unexpected error validating PQ signature for transaction {}: {}",
           transaction.getHash(),
